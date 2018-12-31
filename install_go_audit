@@ -24,3 +24,30 @@ cd ~/.go/src/github.com/slackhq/go-audit/
 # Build go-audit
 make
 cp go-audit.yaml.example go-audit.yaml
+
+#use to be
+# use this also
+
+
+#wget https://storage.googleapis.com/golang/go1.7.4.linux-amd64.tar.gz
+#tar -C /usr/local -xzf go1.7.4.linux-amd64.tar.gz
+
+# Add it to our path
+#echo -e "export PATH=$PATH:/usr/local/go/bin" >> /etc/profile
+#source /etc/profile
+
+# Ensure we're running at least go 1.7
+#go version
+# Returns: go version go1.7.4 linux/amd64
+
+# Set our GOPATH to ~/go
+#mkdir ~/go
+#export GOPATH=~/go
+#apt-get install build-essential
+#go get -u github.com/kardianos/govendor
+
+#cd  go/src/
+#git clone https://github.com/slackhq/go-audit.git
+#cd go-audit
+#~/go/bin/govendor sync  # This command takes a while with no output
+#go build
