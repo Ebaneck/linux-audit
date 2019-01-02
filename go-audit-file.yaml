@@ -1,9 +1,3 @@
-#########################################################################################
-# Please note that until this bug https://github.com/spf13/viper/pull/165 is fixed      #
-# you _must_ specify all values despite the fact that they talk about having a default. #
-# Hopefully this problem with viper goes away soon                                      #
-#########################################################################################
-
 # Configure socket buffers, leave unset to use the system defaults
 # Values will be doubled by the kernel
 # It is recommended you do not set any of these values unless you really need to
@@ -26,26 +20,21 @@ message_tracking:
 # Configure where to output audit events
 # Only 1 output can be active at a given time
 output:
-  # Writes logs to syslog
-  syslog:
+  # Appends logs to a file
+  file:
     enabled: true
-    attempts: 15
+    attempts: 2
 
-    # Configure the type of socket this should be, default is unixgram
-    # This maps to `network` in golangs net.Dial: https://golang.org/pkg/net/#Dial
-    network: unix
+    # Path of the file to write lines to
+    # The actual file will be created if it is missing but make sure the parent directory exists
+    path: /var/log/go-audit.log
 
-    # Set the remote address to connect to, this can be a path or an ip address
-    # This maps to `address` in golangs net.Dial: https://golang.org/pkg/net/#Dial
-    address: /var/run/go-audit.sock
+    # Octal file mode for the log file, make sure to always have a leading 0
+    mode: 0666
 
-    # Sets the facility and severity for all events. See the table below for help
-    # The default is 132 which maps to local0 | warn
-    priority: 132 # local0 | emerg
-
-    # Typically the name of the program generating the message. The PID is of the process is appended for you: [1233]
-    # Default value is "go-audit"
-    tag: "go-audit"
+    # User and group that should own the log file
+    user: nobody
+    group: nogroup
 
 # Configure logging, only stdout and stderr are used.
 log:
@@ -63,17 +52,12 @@ log:
   flags: 0
 
 rules:
+  - -a exit,always -F path=/opt/secret.txt -F perm=wra -k bees_in_my_honey
   # Watch all 64 bit program executions
-  - -a exit,always -F arch=b64 -S execve -k auditkey
+  - -a exit,always -F arch=b64 -S execve
   # Watch all 32 bit program executions
-  - -a exit,always -F arch=b32 -S execve -k auditkey
+  - -a exit,always -F arch=b32 -S execve
   # Enable kernel auditing (required if not done via the "audit" kernel boot parameter)
   # You can also use this to lock the rules. Locking requires a reboot to modify the ruleset.
   # This should be the last rule in the chain.
   #- -e 1
-
-filters:
-  # Each filter consists of exactly 3 parts
-  - syscall: ""  
-    message_type: 1305
-    regex: .*
