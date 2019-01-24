@@ -1,0 +1,69 @@
+
+
+https://github.com/linux-audit/audit-userspace/tree/master/rules
+
+
+rules:
+  - -b 1024
+  # required if you set canary: true
+  - -w /proc/net/netlink -p war -k netlink-file
+  # watch interesting network events
+  - -a exit,always -S connect
+  - -a exit,always -S listen
+  # watch execve for everything that has an auid set (ignores things like cron)
+  - -a exit,always -F arch=b64 -F auid!=-1 -S execve -k user_commands
+  - -a exit,always -F arch=b32 -F auid!=-1 -S execve -k user_commands
+  # failure to access file because of perms
+  - -a always,exit -F arch=b32 -S open -S openat -F exit=-EACCES -k access
+  - -a always,exit -F arch=b64 -S open -S openat -F exit=-EACCES -k access
+  - -a always,exit -F arch=b32 -S open -S openat -F exit=-EPERM -k access
+  - -a always,exit -F arch=b64 -S open -S openat -F exit=-EPERM -k access
+  
+  
+  
+## Exec logging
+# We're first excluding quite a few binaries from exec logging.
+# These are called often and do not provide significant value.
+-A exit,never -F path=/bin/ls -F perm=x
+-A exit,never -F path=/bin/sh -F perm=x
+-A exit,never -F path=/bin/grep  -F perm=x
+-A exit,never -F path=/bin/egrep -F perm=x
+-A exit,never -F path=/usr/bin/tail -F perm=x
+-A exit,never -F path=/bin/stty -F perm=x
+-A exit,never -F path=/usr/bin/tty -F perm=x
+-A exit,never -F path=/usr/bin/wc -F perm=x
+-A exit,never -F path=/bin/ping -F perm=x
+-A exit,never -F path=/bin/sleep -F perm=x
+-A exit,never -F path=/bin/touch -F perm=x
+
+# Setup the exec monitoring for all other cases
+-a exit,always -F arch=b64 -S execve -k exec
+#-a exit,always -F arch=b32 -S execve -k exec
+
+#-a entry,always -S clone -S fork -S vfork
+#-a entry,always -S access -F a1=4
+
+## Log changes to system configuration files.
+# Modify audit configuration
+-w /etc/audit/ -p wa -k audit
+ 
+# Modify startup
+-w /sbin/init -p wa -k init
+-w /etc/systemd -p wa -k init
+
+# Modify PAM
+-w /etc/pam.d -p wa -k pam
+-w /etc/security -p wa -k pam
+-w /lib/security -p wa -k pam
+ 
+# Users
+-w /etc/group -p wa -k user
+-w /etc/passwd -p wa -k user
+-w /etc/gshadow -p wa -k user
+-w /etc/shadow -p wa -k user
+-w /etc/sudoers -p wa -k user
+ 
+
+# Time changes
+-a always,exit -F arch=b32 -S adjtimex -S settimeofday -k time-change
+-a always,exit -F arch=b64 -S adjtimex -S settimeofday -k time-change
